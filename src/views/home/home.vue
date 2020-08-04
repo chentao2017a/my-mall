@@ -3,14 +3,14 @@
     <nav-bar class="home-nav">
       <div slot="center">购物街</div>
     </nav-bar>
-    <scroll class="content" ref="scroll">
+    <scroll class="content" ref="scroll" :probe-type="3" @scroll="contentScroll" @pullUpLoad="loadMore">
       <home-swiper :banners="banners"></home-swiper>
       <RecommendView :recommends="recommends"></RecommendView>
       <FeatureView></FeatureView>
       <TabControl :titles="['流行','新款','精选']" class="tab-control" @tabClick="tabClick"></TabControl>
       <GoodsList :goods="goods[currentType].list"></GoodsList>
     </scroll>
-    <back-top @click.native="backClick"></back-top>
+    <back-top @click.native="backClick" v-show="isShowBack"></back-top>
   </div>
 </template>
 
@@ -39,7 +39,8 @@
           'new': {page: 0, list: []},
           'sell': {page: 0, list: []},
         },
-        currentType: 'pop'
+        currentType: 'pop',
+        isShowBack: false
       }
     },
     components: {
@@ -73,8 +74,14 @@
             break;
         }
       },
-      backClick(){
-        this.$refs.scroll.scroll.scrollTo(0,0,500);
+      backClick() {
+        this.$refs.scroll.scroll.scrollTo(0, 0, 500);
+      },
+      contentScroll(position) {
+        this.isShowBack = -position.y > 1000 ? true : false
+      },
+      loadMore(){
+        this.getHomeGoods(this.currentType)
       },
       //获取数据
       getHomeMultidata() {
@@ -89,6 +96,8 @@
         getHomeGoods(type, page).then(res => {
           this.goods[type].list.push(...res.data.list);
           this.goods[type].page += 1;
+          this.$refs.scroll.scroll.finishPullUp();
+          this.$refs.scroll.scroll.refresh();
         })
       }
     }
@@ -117,7 +126,8 @@
     top: 44px;
     background-color: #fff;
   }
-  .content{
+
+  .content {
     height: calc(100vh - 48px);
     overflow: hidden;
   }

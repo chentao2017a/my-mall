@@ -1,6 +1,6 @@
 <template>
-  <div class="goods-list">
-    <img :src="goodsItem.show.img" alt="">
+  <div class="goods-list" @click="itemClick">
+    <img :src="showImage" alt="" @load='imgLoad'>
     <div class="text">
       <p>{{goodsItem.title}}</p>
       <span class="price">{{goodsItem.price}}</span>
@@ -19,6 +19,19 @@
         default() {
           return {}
         }
+      }
+    },
+    computed :{
+      showImage(){
+        return this.goodsItem.image || this.goodsItem.show.img
+      }
+    },
+    methods: {
+      imgLoad() {
+        this.$bus.$emit('itemImgLoad')
+      },
+      itemClick(){
+        this.$router.push('/detail/' + this.goodsItem.iid)
       }
     }
   }
@@ -49,10 +62,12 @@
     text-overflow: ellipsis;
     text-align: center;
   }
-  .text span{
+
+  .text span {
     display: inline-block;
     height: 18px;
   }
+
   .price {
     color: var(--color-tint);
   }

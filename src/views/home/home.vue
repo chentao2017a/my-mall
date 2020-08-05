@@ -3,11 +3,17 @@
     <nav-bar class="home-nav">
       <div slot="center">购物街</div>
     </nav-bar>
+    <TabControl :titles="['流行','新款','精选']"
+                @tabClick="tabClick" ref="tabControl1"
+                class="tab-control" v-show="isFixed">
+    </TabControl>
     <scroll class="content" ref="scroll" :probe-type="3" @scroll="contentScroll" @pullUpLoad="loadMore">
-      <home-swiper :banners="banners"></home-swiper>
+      <home-swiper :banners="banners" @swiperImageLoad.once="swiperImageLoad"></home-swiper>
       <RecommendView :recommends="recommends"></RecommendView>
       <FeatureView></FeatureView>
-      <TabControl :titles="['流行','新款','精选']" class="tab-control" @tabClick="tabClick"></TabControl>
+      <TabControl :titles="['流行','新款','精选']"
+                  @tabClick="tabClick" ref="tabControl2">
+      </TabControl>
       <GoodsList :goods="goods[currentType].list"></GoodsList>
     </scroll>
     <back-top @click.native="backClick" v-show="isShowBack"></back-top>
@@ -20,13 +26,14 @@
   import FeatureView from "@/views/home/childComs/FeatureView";
 
   import NavBar from "@/components/commmon/navbar/NavBar";
-  import TabControl from "@/components/content/TabControl";
+  import TabControl from "@/components/content/tabControl/TabControl";
   import GoodsList from "@/components/content/goods/GoodsList";
   import GoodListItem from "@/components/content/goods/GoodListItem";
   import Scroll from "@/components/commmon/scroll/Scroll";
   import BackTop from "@/components/content/backtop/BackTop";
 
   import {getHomeMultidata, getHomeGoods} from "@/network/home";
+  import {debounce} from "@/common/utils";
 
   export default {
     name: "home",
@@ -40,7 +47,10 @@
           'sell': {page: 0, list: []},
         },
         currentType: 'pop',
-        isShowBack: false
+        isShowBack: false,
+        tabOffsetTop: 0,
+        isFixed: false,
+        saveY: 0
       }
     },
     components: {
@@ -60,6 +70,19 @@
       this.getHomeGoods('new');
       this.getHomeGoods('sell');
     },
+    mounted() {
+      const refresh = debounce(this.$refs.scroll.scroll.refresh, 500);
+      this.$bus.$on('itemImgLoad', () => {
+        this.$refs.scroll.scroll && refresh();
+      })
+    },
+    activated(){
+      this.$refs.scroll.scroll.refresh()
+      this.$refs.scroll.scroll.scrollTo(0,this.saveY,0)
+    },
+    deactivated(){
+      this.saveY = this.$refs.scroll.scroll.y;
+    },
     methods: {
       tabClick(index) {
         switch (index) {
@@ -73,14 +96,17 @@
             this.currentType = 'sell';
             break;
         }
+        this.$refs.tabControl1.currentIndex = index
+        this.$refs.tabControl2.currentIndex = index
       },
       backClick() {
         this.$refs.scroll.scroll.scrollTo(0, 0, 500);
       },
       contentScroll(position) {
-        this.isShowBack = -position.y > 1000 ? true : false
+        this.isShowBack = -position.y > 1000 ? true : false;
+        this.isFixed = (-position.y) > this.tabOffsetTop
       },
-      loadMore(){
+      loadMore() {
         this.getHomeGoods(this.currentType)
       },
       //获取数据
@@ -99,6 +125,9 @@
           this.$refs.scroll.scroll.finishPullUp();
           this.$refs.scroll.scroll.refresh();
         })
+      },
+      swiperImageLoad() {
+        this.tabOffsetTop = this.$refs.tabControl2.$el.offsetTop
       }
     }
   }
@@ -106,29 +135,36 @@
 
 <style scoped>
   .home {
-    padding-top: 44px;
+    /*padding-top: 44px;*/
     height: 100vh;
   }
 
   .home-nav {
     background-color: var(--color-tint);
     color: white;
-    position: fixed;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    z-index: 999;
-  }
-
-  .tab-control {
-    position: sticky;
-    top: 44px;
-    background-color: #fff;
+    /*position: fixed;*/
+    /*left: 0;*/
+    /*right: 0;*/
+    /*top: 0;*/
+    /*bottom: 0;*/
+    /*z-index: 999;*/
   }
 
   .content {
-    height: calc(100vh - 48px);
+    position: absolute;
+    top: 44px;
+    bottom: 49px;
+    left: 0;
+    right: 0;
     overflow: hidden;
   }
+
+  .tab-control {
+    position: relative;
+    left: 0;
+    right: 0;
+    background-color: white;
+    z-index: 9;
+  }
+
 </style>

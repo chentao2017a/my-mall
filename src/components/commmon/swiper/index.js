@@ -1,5 +1,5 @@
-import Swiper from "@/components/commmon/swiper/Swiper";
-import SwiperItem from "@/components/commmon/swiper/SwiperItem";
+import Swiper from './Swiper'
+import SwiperItem from './SwiperItem'
 
 export {
   Swiper, SwiperItem

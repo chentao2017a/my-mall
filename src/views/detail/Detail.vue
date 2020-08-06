@@ -10,7 +10,7 @@
       <detail-comment-info :comment-info="commentInfo" ref="comment"/>
       <goods-list :goods="recommends" ref="goods"/>
     </Scroll>
-    <detail-bottom-bar/>
+    <detail-bottom-bar @addToCart="addToCart"/>
     <back-top @click.native="backTop" v-show="showBackTop"/>
   </div>
 </template>
@@ -63,7 +63,6 @@
     created() {
       this.iid = this.$route.params.iid
       getDetail(this.iid).then(res => {
-        console.log(res);
         let data = res.result;
         this.topImages = res.result.itemInfo.topImages
         this.goods = new Goods(data.itemInfo, data.columns, data.shopInfo.services)
@@ -80,7 +79,6 @@
           this.themeTopYs.push(this.$refs.comment.$el.offsetTop - 44)
           this.themeTopYs.push(this.$refs.goods.$el.offsetTop - 44)
           this.themeTopYs.push(Number.MAX_VALUE)
-          console.log(this.themeTopYs);
         })
 
       })
@@ -105,6 +103,15 @@
             this.$refs.nav.currentIndex = i
           }
         }
+      },
+      addToCart(){
+        const product = {}
+        product.image= this.topImages[0]
+        product.title = this.goods.title
+        product.desc = this.goods.desc
+        product.price = this.goods.realPrice
+        product.iid = this.iid
+        this.$store.commit('addCart',product)
       }
     }
   }
